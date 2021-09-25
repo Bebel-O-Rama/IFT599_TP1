@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as panda
 import matplotlib.pyplot as plot
 from dataclasses import dataclass
@@ -25,10 +26,30 @@ def getCentreClasse(dataset, nomClasse):
 # Methode 1a
 
 # TODO: Rajouter des attributs avec la distance intra et interclasse
+def distanceEuclide(classe, centreClasse):
+    maxDistance = 0
+    for i in classe.index:
+        distanceSepalL = (classe["sepal_length"].get(i) - centreClasse.sepal_length)
+        distanceSepalW = (classe["sepal_width"].get(i) - centreClasse.sepal_width)
+        distancePetalL = (classe["petal_length"].get(i) - centreClasse.petal_length)
+        distancePetalW = (classe["petal_width"].get(i) - centreClasse.petal_width)
+
+        distance = np.sqrt(np.power(distanceSepalL, 2) + np.power(distanceSepalW, 2) + np.power(distancePetalL, 2) + np.power(distancePetalW, 2))
+        if(distance > maxDistance):
+            maxDistance = distance
+
+    return maxDistance
+
+
 def methodeUnA(iris):
     setosaCentre = getCentreClasse(iris, "setosa")
     versicolorCentre = getCentreClasse(iris, "versicolor")
     ### air_quality["intra_class_distance"] = (air_quality["station_paris"] / air_quality["station_antwerp"])
+
+    intraClasseSetosa = distanceEuclide(iris[iris["species"] == "setosa"], setosaCentre, "setosa")
+    # Interclasse de versicolor -> Setosa
+    interClasseVersiSetosa = distanceEuclide(iris[iris["species"] == "versicolor"], setosaCentre, "versicolor")
+
 
     versicolor = iris[iris["species"] == "versicolor"]
     versicolor = versicolor[["sepal_length", "sepal_width", "petal_length", "petal_width"]]

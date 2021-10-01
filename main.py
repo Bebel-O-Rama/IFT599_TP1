@@ -3,6 +3,10 @@ import pandas as panda
 import matplotlib.pyplot as plot
 from dataclasses import dataclass
 
+SETOSA = "setosa"
+VERSICOLOR = "versicolor"
+VIRGINICA = "virginica"
+
 
 @dataclass
 class IRISClass:
@@ -27,6 +31,7 @@ def getCentreClasse(dataset, nomClasse):
 
 # TODO: Rajouter des attributs avec la distance intra et interclasse
 def distanceEuclide(classe, centreClasse):
+    minDistance = float('inf')
     maxDistance = 0
     for i in classe.index:
         distanceSepalL = (classe["sepal_length"].get(i) - centreClasse.sepal_length)
@@ -39,8 +44,10 @@ def distanceEuclide(classe, centreClasse):
                 distancePetalW, 2))
         if (distance > maxDistance):
             maxDistance = distance
+        if (distance < minDistance):
+            minDistance = distance
 
-    return maxDistance
+    return (minDistance, maxDistance)
 
 
 def distanceMahalanobis(classe, centreClasse):
@@ -83,22 +90,60 @@ def distanceMahalanobis(classe, centreClasse):
 
 
 def methodeUnA(iris):
-    setosaCentre = getCentreClasse(iris, "setosa")
-    versicolorCentre = getCentreClasse(iris, "versicolor")
-    ### air_quality["intra_class_distance"] = (air_quality["station_paris"] / air_quality["station_antwerp"])
+    setosaCentre = getCentreClasse(iris, SETOSA)
+    versicolorCentre = getCentreClasse(iris, VERSICOLOR)
+    virginicaCentre = getCentreClasse(iris, VIRGINICA)
 
-    intraClasseSetosa = distanceEuclide(iris[iris["species"] == "setosa"], setosaCentre)
-    # Interclasse de versicolor -> Setosa
-    interClasseVersiSetosa = distanceEuclide(iris[iris["species"] == "versicolor"], setosaCentre)
-    distanceMahalanobis(iris[iris["species"] == "setosa"], setosaCentre)
-    versicolor = iris[iris["species"] == "versicolor"]
-    versicolor = versicolor[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    versicolor.plot.scatter(x="sepal_length", y="petal_length", alpha=0.5)
-    # print(versicolor)
-    plot.savefig("output/test.pdf")
+    # On commence par trouver les distances euclidienne intraclasse et interclasse pour nos trois classes
+
+    # Intraclasse
+    intraClasseSetosa = distanceEuclide(iris[iris["species"] == SETOSA], setosaCentre)
+    intraClasseVersicolor = distanceEuclide(iris[iris["species"] == VERSICOLOR], versicolorCentre)
+    intraClasseVirginica = distanceEuclide(iris[iris["species"] == VIRGINICA], virginicaCentre)
+
+    # Interclasse Setosa
+    interClasseSetosaVersicolor = distanceEuclide(iris[iris["species"] == SETOSA], versicolorCentre)
+    interClasseSetosaVirginica = distanceEuclide(iris[iris["species"] == SETOSA], virginicaCentre)
+
+    # Interclasse Versicolor
+    interClasseVersicolorSetosa = distanceEuclide(iris[iris["species"] == VERSICOLOR], setosaCentre)
+    interClasseVersicolorVirginica = distanceEuclide(iris[iris["species"] == VERSICOLOR], virginicaCentre)
+
+    # Interclasse Virginica
+    interClasseVirginicaSetosa = distanceEuclide(iris[iris["species"] == VIRGINICA], setosaCentre)
+    interClasseVirginicaVersicolor = distanceEuclide(iris[iris["species"] == VIRGINICA], versicolorCentre)
+
+    print("--- DISTANCE INTRACLASSE ---")
+    printDistance(SETOSA, intraClasseSetosa, True)
+    printDistance(VERSICOLOR, intraClasseVersicolor, True)
+    printDistance(VIRGINICA, intraClasseVirginica, True)
+
+    print("--- DISTANCE INTERCLASSE SETOSA ---")
+    printDistance(VERSICOLOR, interClasseSetosaVersicolor, False)
+    printDistance(VIRGINICA, interClasseSetosaVirginica, False)
+
+    print("--- DISTANCE INTERCLASSE VERSICOLOR ---")
+    printDistance(SETOSA, interClasseVersicolorSetosa, False)
+    printDistance(VIRGINICA, interClasseVersicolorVirginica, False)
+
+    print("--- DISTANCE INTERCLASSE VIRGINICA ---")
+    printDistance(SETOSA, interClasseVirginicaSetosa, False)
+    printDistance(VERSICOLOR, interClasseVirginicaVersicolor, False)
+
+    # distanceMahalanobis(iris[iris["species"] == "setosa"], setosaCentre)
+    # versicolor = iris[iris["species"] == "versicolor"]
+    # versicolor = versicolor[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    # versicolor.plot.scatter(x="sepal_length", y="petal_length", alpha=0.5)
+    # # print(versicolor)
+    # plot.savefig("output/test.pdf")
     # print(iris.to_string())
     return
 
+def printDistance(nomClasse, tupleDistance, estIntra):
+    indiceTuple = 0
+    if estIntra:
+        indiceTuple = 1
+    print(nomClasse + " : " + str(tupleDistance[indiceTuple]))
 
 def main():
     iris = panda.read_csv("data/iris.csv")

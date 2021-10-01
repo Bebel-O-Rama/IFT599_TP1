@@ -198,11 +198,33 @@ def histogramme(iris):
     plot.figure(1)
     versicolor = iris[iris["species"] == "versicolor"]
     setosa = iris[iris["species"] == "setosa"]
-    plot.hist((versicolor["petal_length"], setosa["petal_length"]))
-    plot.title("Longueurs des pétales de versicolor en comparaison à setosa")
+    plot.hist((versicolor["sepal_length"], setosa["sepal_length"]))
+    plot.title("Longueurs des sépales de versicolor en comparaison à setosa")
     plot.ylabel("Fréquence")
-    plot.xlabel("Longueur des pétales")
+    plot.xlabel("Longueur des sépales")
     plot.savefig("output/2a.png")
+
+
+def histogrammeNormalise(irisNormalise, eigenVector):
+    plot.figure(5)
+
+    setosaNorm = irisNormalise[irisNormalise["species"] == "setosa"]
+    setosaNorm = setosaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    setosaNormalisees = np.matmul(eigenVector, setosaNorm.to_numpy().transpose())
+
+    versicolorNorm = irisNormalise[irisNormalise["species"] == "versicolor"]
+    versicolorNorm = versicolorNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    versicolorNormalisees = np.matmul(eigenVector, versicolorNorm.to_numpy().transpose())
+
+    virginicaNorm = irisNormalise[irisNormalise["species"] == "virginica"]
+    virginicaNorm = virginicaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    virginicaNormalisees = np.matmul(eigenVector, virginicaNorm.to_numpy().transpose())
+
+    plot.hist((virginicaNormalisees[0], versicolorNormalisees[0]))
+    plot.title("Séparation des classes de la banque de données IRIS")
+    plot.ylabel("Fréquence")
+    plot.xlabel("Valeur Z")
+    plot.savefig("output/2ac.png")
 
 
 def nuagePoints(iris):
@@ -214,10 +236,31 @@ def nuagePoints(iris):
     plot.title("Longueurs des sépales comparément à la longueur des pétales")
     plot.ylabel("Longueur des pétales")
     plot.xlabel("Longueur des sépales")
-    plot.savefig("output/2b.png")
 
 
-def getEigenValues(iris):
+def nuagePointsNormalise(irisNormalise, eigenVectors):
+    plot.figure(3)
+    setosaNorm = irisNormalise[irisNormalise["species"] == "setosa"]
+    setosaNorm = setosaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    setosaNormalisees = np.matmul(eigenVectors, setosaNorm.to_numpy().transpose())
+
+    versicolorNorm = irisNormalise[irisNormalise["species"] == "versicolor"]
+    versicolorNorm = versicolorNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    versicolorNormalisees = np.matmul(eigenVectors, versicolorNorm.to_numpy().transpose())
+
+    virginicaNorm = irisNormalise[irisNormalise["species"] == "virginica"]
+    virginicaNorm = virginicaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    virginicaNormalisees = np.matmul(eigenVectors, virginicaNorm.to_numpy().transpose())
+
+    plot.scatter(x=setosaNormalisees[0], y=setosaNormalisees[1])
+    plot.scatter(x=versicolorNormalisees[0], y=versicolorNormalisees[1])
+    plot.scatter(x=virginicaNormalisees[0], y=virginicaNormalisees[1])
+    plot.title("Séparation des différentes classes de la banque de données IRIS")
+    plot.savefig("output/2bc.png")
+    plot.show()
+
+
+def getEigenValues(iris, nbAxis):
     classe = iris[iris["species"] == "setosa"]
     centreClasse = getCentreClasse(iris, "setosa")
 
@@ -239,6 +282,64 @@ def getEigenValues(iris):
     DimensionsImportance = (
         eigenValues[0] / sum(eigenValues), eigenValues[1] / sum(eigenValues), eigenValues[2] / sum(eigenValues),
         eigenValues[3] / sum(eigenValues))
+
+    # from https://stackoverflow.com/questions/6910641/how-do-i-get-indices-of-n-maximum-values-in-a-numpy-array
+    mostImportantColumns = np.argpartition(DimensionsImportance, -nbAxis)[-nbAxis:]
+    mostImportantColumns = np.sort(mostImportantColumns)
+
+    return eigenVectors[mostImportantColumns]
+
+
+def normalizeIRIS(iris):
+    centreSetosa = getCentreClasse(iris, "setosa")
+    centreVersicolor = getCentreClasse(iris, "versicolor")
+    centreVirginica = getCentreClasse(iris, "virginica")
+    ecartTypeSetosa = getEcartTypeClasse(iris, "setosa")
+    ecartTypeVersicolor = getEcartTypeClasse(iris, "versicolor")
+    ecartTypeVirginica = getEcartTypeClasse(iris, "virginica")
+
+    setosaSepalL = (iris[iris["species"] == "setosa"][
+                        ["sepal_length"]] - round(iris["sepal_length"].mean(), 1)) / round(iris["sepal_length"].std(), 1)
+    setosaSepalW = (iris[iris["species"] == "setosa"][
+                        ["sepal_width"]] - round(iris["sepal_width"].mean(), 1)) / round(iris["sepal_width"].std(), 1)
+    setosaPetalL = (iris[iris["species"] == "setosa"][
+                        ["petal_length"]] - round(iris["petal_length"].mean(), 1)) / round(iris["petal_length"].std(), 1)
+    setosaPetalW = (iris[iris["species"] == "setosa"][
+                        ["petal_width"]] - round(iris["petal_width"].mean(), 1)) / round(iris["petal_width"].std(), 1)
+
+    versicolorSepalL = (iris[iris["species"] == "versicolor"][
+                            ["sepal_length"]] - round(iris["sepal_length"].mean(), 1)) / round(iris["sepal_length"].std(), 1)
+    versicolorSepalW = (iris[iris["species"] == "versicolor"][
+                            ["sepal_width"]] - round(iris["sepal_width"].mean(), 1)) / round(iris["sepal_width"].std(), 1)
+    versicolorPetalL = (iris[iris["species"] == "versicolor"][
+                            ["petal_length"]] - round(iris["petal_length"].mean(), 1)) / round(iris["petal_length"].std(), 1)
+    versicolorPetalW = (iris[iris["species"] == "versicolor"][
+                            ["petal_width"]] - round(iris["petal_width"].mean(), 1)) / round(iris["petal_width"].std(), 1)
+
+    virginicaSepalL = (iris[iris["species"] == "virginica"][
+                           ["sepal_length"]] - round(iris["sepal_length"].mean(), 1)) / round(iris["sepal_length"].std(), 1)
+    virginicaSepalW = (iris[iris["species"] == "virginica"][
+                           ["sepal_width"]] - round(iris["sepal_width"].mean(), 1)) / round(iris["sepal_width"].std(), 1)
+    virginicaPetalL = (iris[iris["species"] == "virginica"][
+                           ["petal_length"]] - round(iris["petal_length"].mean(), 1)) / round(iris["petal_length"].std(), 1)
+    virginicaPetalW = (iris[iris["species"] == "virginica"][
+                           ["petal_width"]] - round(iris["petal_width"].mean(), 1)) / round(iris["petal_width"].std(), 1)
+
+    sepalLength = panda.concat([setosaSepalL, versicolorSepalL, virginicaSepalL])
+    sepalWidth = panda.concat([setosaSepalW, versicolorSepalW, virginicaSepalW])
+    petalLength = panda.concat([setosaPetalL, versicolorPetalL, virginicaPetalL])
+    petalWidth = panda.concat([setosaPetalW, versicolorPetalW, virginicaPetalW])
+
+    normalizedDataframe = panda.DataFrame()
+
+    # Order is reversed to keep the dataframe in the same order as the original
+    normalizedDataframe.insert(0, 'species', iris["species"].squeeze(axis=0))
+    normalizedDataframe.insert(0, 'petal_width', petalWidth.squeeze(axis=0))
+    normalizedDataframe.insert(0, 'petal_length', petalLength.squeeze(axis=0))
+    normalizedDataframe.insert(0, 'sepal_width', sepalWidth.squeeze(axis=0))
+    normalizedDataframe.insert(0, 'sepal_length', sepalLength.squeeze(axis=0))
+
+    return normalizedDataframe
 
 
 def printDistance(nomClasse, tupleDistance, estIntra):
@@ -312,8 +413,9 @@ def main():
     methodeUnA(iris)
     histogramme(iris)
     nuagePoints(iris)
-    # normalizeIRIS(iris)
-    getEigenValues(iris)
+    normalizedIRIS = normalizeIRIS(iris)
+    histogrammeNormalise(normalizedIRIS, getEigenValues(normalizedIRIS, 1))
+    nuagePointsNormalise(normalizedIRIS, getEigenValues(normalizedIRIS, 2))
 
 
 if __name__ == '__main__':

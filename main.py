@@ -23,6 +23,16 @@ def getCentreClasse(dataset, nomClasse):
     return IRISClass(sepalLengthMean, sepalWidthMean, petalLengthMean, petalWidthMean, nomClasse)
 
 
+def getEcartTypeClasse(dataset, nomClasse):
+    classe = dataset[dataset["species"] == nomClasse]
+    classe = classe[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
+    sepalLengthStd = round(classe["sepal_length"].std(), 1)
+    sepalWidthStd = round(classe["sepal_width"].std(), 1)
+    petalLengthStd = round(classe["petal_length"].std(), 1)
+    petalWidthStd = round(classe["petal_width"].std(), 1)
+    return IRISClass(sepalLengthStd, sepalWidthStd, petalLengthStd, petalWidthStd, nomClasse)
+
+
 # Methode 1a
 
 # TODO: Rajouter des attributs avec la distance intra et interclasse
@@ -93,16 +103,66 @@ def methodeUnA(iris):
     distanceMahalanobis(iris[iris["species"] == "setosa"], setosaCentre)
     versicolor = iris[iris["species"] == "versicolor"]
     versicolor = versicolor[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    versicolor.plot.scatter(x="sepal_length", y="petal_length", alpha=0.5)
     # print(versicolor)
     plot.savefig("output/test.pdf")
     # print(iris.to_string())
     return
 
 
+def histogramme(iris):
+    plot.figure(1)
+    versicolor = iris[iris["species"] == "versicolor"]
+    setosa = iris[iris["species"] == "setosa"]
+    plot.hist((versicolor["petal_length"], setosa["petal_length"]))
+    plot.title("Longueurs des pétales de versicolor en comparaison à setosa")
+    plot.ylabel("Fréquence")
+    plot.xlabel("Longueur des pétales")
+    plot.savefig("output/2a.pdf")
+
+
+def nuagePoints(iris):
+    plot.figure(2)
+    setosa = iris[iris["species"] == "setosa"]
+    versicolor = iris[iris["species"] == "versicolor"]
+    plot.scatter(x=setosa["sepal_length"], y=setosa["petal_length"])
+    plot.scatter(x=versicolor["sepal_length"], y=versicolor["petal_length"])
+    plot.title("Longueurs des sépales comparément à la longueur des pétales")
+    plot.ylabel("Longueur des pétales")
+    plot.xlabel("Longueur des sépales")
+    plot.show()
+    plot.savefig("output/2b.pdf")
+
+
+def getEigenValues(iris):
+    classe = iris[iris["species"] == "setosa"]
+    centreClasse = getCentreClasse(iris, "setosa")
+
+    matriceCov = np.zeros((4, 4), dtype=float)
+    centre = np.array(
+        [centreClasse.sepal_length, centreClasse.sepal_width, centreClasse.petal_length, centreClasse.petal_width])
+    for i in classe.index:
+        currentPos = np.array(
+            [classe["sepal_length"].get(i), classe["sepal_width"].get(i), classe["petal_length"].get(i),
+             classe["petal_width"].get(i)])
+        a = np.array(currentPos - centre)[np.newaxis]
+        b = a * a.T
+        matriceCov += b
+    matriceCov = matriceCov / (len(classe.index) - 1)
+
+    eigenResults = np.linalg.eig(matriceCov)
+    eigenValues = eigenResults[0]
+    eigenVectors = eigenResults[1]
+    DimensionsImportance = (
+    eigenValues[0] / sum(eigenValues), eigenValues[1] / sum(eigenValues), eigenValues[2] / sum(eigenValues),
+    eigenValues[3] / sum(eigenValues))
+
 def main():
     iris = panda.read_csv("data/iris.csv")
     methodeUnA(iris)
+    # histogramme(iris)
+    # nuagePoints(iris)
+    normalizeIRIS(iris)
+    getEigenValues(iris)
 
 
 # Inspiré du tutoriel de plotting de Pandas:

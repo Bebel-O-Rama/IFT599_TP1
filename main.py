@@ -1,3 +1,22 @@
+####
+# Nicolas Auclair-Labbé : aucn2303
+# Maïgan Périot : perm2424
+###
+#
+# Ce projet est pour le TP1 du cours IFT599, automne 2021
+# Pour exécuter ce programme il est nécessaire d'avoir :
+#   - Python (3 ou plus)
+#   - numpy
+#   - matplotlib
+#   - pandas
+#   - l'ensemble iris sous le chemin "data/iris.csv"
+#   - un dossier "output" pour y recevoir les graphiques et tableaux en sortie
+#
+# Dans le cadre de ce projet Python nous avons notamment utiliser les sources suivantes :
+#   - https://towardsdatascience.com/simple-little-tables-with-matplotlib-9780ef5d0bc4 pour la création de tableau avec la librairie matplotlib, dans la méthode saveTable(...)
+#   - https://stackoverflow.com/questions/6910641/how-do-i-get-indices-of-n-maximum-values-in-a-numpy-array pour le calcul des eigen vectors
+
+
 import numpy as np
 import pandas as panda
 import matplotlib.pyplot as plot

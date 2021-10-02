@@ -7,6 +7,13 @@ SETOSA = "setosa"
 VERSICOLOR = "versicolor"
 VIRGINICA = "virginica"
 
+SEPAL_LENGTH = "sepal_length"
+SEPAL_WIDTH = "sepal_width"
+PETAL_LENGTH = "petal_length"
+PETAL_WIDTH = "petal_width"
+
+SPECIES = "species"
+
 
 @dataclass
 class IRISClass:
@@ -18,36 +25,32 @@ class IRISClass:
 
 
 def getCentreClasse(dataset, nomClasse):
-    classe = dataset[dataset["species"] == nomClasse]
-    classe = classe[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    sepalLengthMean = round(classe["sepal_length"].mean(), 1)
-    sepalWidthMean = round(classe["sepal_width"].mean(), 1)
-    petalLengthMean = round(classe["petal_length"].mean(), 1)
-    petalWidthMean = round(classe["petal_width"].mean(), 1)
+    classe = dataset[dataset[SPECIES] == nomClasse]
+    classe = classe[[SEPAL_LENGTH, SEPAL_WIDTH, PETAL_LENGTH, PETAL_WIDTH]]
+    sepalLengthMean = round(classe[SEPAL_LENGTH].mean(), 1)
+    sepalWidthMean = round(classe[SEPAL_WIDTH].mean(), 1)
+    petalLengthMean = round(classe[PETAL_LENGTH].mean(), 1)
+    petalWidthMean = round(classe[PETAL_WIDTH].mean(), 1)
     return IRISClass(sepalLengthMean, sepalWidthMean, petalLengthMean, petalWidthMean, nomClasse)
 
 
 def getEcartTypeClasse(dataset, nomClasse):
-    classe = dataset[dataset["species"] == nomClasse]
-    classe = classe[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    sepalLengthStd = round(classe["sepal_length"].std(), 1)
-    sepalWidthStd = round(classe["sepal_width"].std(), 1)
-    petalLengthStd = round(classe["petal_length"].std(), 1)
-    petalWidthStd = round(classe["petal_width"].std(), 1)
+    classe = dataset[dataset[SPECIES] == nomClasse]
+    classe = classe[[SEPAL_LENGTH, SEPAL_WIDTH, PETAL_LENGTH, PETAL_WIDTH]]
+    sepalLengthStd = round(classe[SEPAL_LENGTH].std(), 1)
+    sepalWidthStd = round(classe[SEPAL_WIDTH].std(), 1)
+    petalLengthStd = round(classe[PETAL_LENGTH].std(), 1)
+    petalWidthStd = round(classe[PETAL_WIDTH].std(), 1)
     return IRISClass(sepalLengthStd, sepalWidthStd, petalLengthStd, petalWidthStd, nomClasse)
 
-
-# Methode 1a
-
-# TODO: Rajouter des attributs avec la distance intra et interclasse
 def distanceEuclide(classe, centreClasse):
     minDistance = float('inf')
     maxDistance = 0
     for i in classe.index:
-        distanceSepalL = (classe["sepal_length"].get(i) - centreClasse.sepal_length)
-        distanceSepalW = (classe["sepal_width"].get(i) - centreClasse.sepal_width)
-        distancePetalL = (classe["petal_length"].get(i) - centreClasse.petal_length)
-        distancePetalW = (classe["petal_width"].get(i) - centreClasse.petal_width)
+        distanceSepalL = (classe[SEPAL_LENGTH].get(i) - centreClasse.sepal_length)
+        distanceSepalW = (classe[SEPAL_WIDTH].get(i) - centreClasse.sepal_width)
+        distancePetalL = (classe[PETAL_LENGTH].get(i) - centreClasse.petal_length)
+        distancePetalW = (classe[PETAL_WIDTH].get(i) - centreClasse.petal_width)
 
         distance = np.sqrt(
             np.power(distanceSepalL, 2) + np.power(distanceSepalW, 2) + np.power(distancePetalL, 2) + np.power(
@@ -68,8 +71,8 @@ def distanceMahalanobis(classeA, classeB, centreClasseB):
         [centreClasseB.sepal_length, centreClasseB.sepal_width, centreClasseB.petal_length, centreClasseB.petal_width])
     for i in classeB.index:
         currentPos = np.array(
-            [classeB["sepal_length"].get(i), classeB["sepal_width"].get(i), classeB["petal_length"].get(i),
-             classeB["petal_width"].get(i)])
+            [classeB[SEPAL_LENGTH].get(i), classeB[SEPAL_WIDTH].get(i), classeB[PETAL_LENGTH].get(i),
+             classeB[PETAL_WIDTH].get(i)])
         a = np.array(currentPos - centre)[np.newaxis]
         b = a * a.T
         matriceCov += b
@@ -77,8 +80,8 @@ def distanceMahalanobis(classeA, classeB, centreClasseB):
     matriceCov = np.linalg.inv(matriceCov)
     for i in classeA.index:
         currentPos = np.array(
-            [classeA["sepal_length"].get(i), classeA["sepal_width"].get(i), classeA["petal_length"].get(i),
-             classeA["petal_width"].get(i)])
+            [classeA[SEPAL_LENGTH].get(i), classeA[SEPAL_WIDTH].get(i), classeA[PETAL_LENGTH].get(i),
+             classeA[PETAL_WIDTH].get(i)])
         a = np.array(currentPos - centre)[np.newaxis]
         b = a.dot(matriceCov)
         c = b.dot(a.T)
@@ -90,56 +93,56 @@ def distanceMahalanobis(classeA, classeB, centreClasseB):
     return (float(minDistance[0]), float(maxDistance[0]))
 
 
-def methodeUnA(iris):
+def methodeUn(iris):
     setosaCentre = getCentreClasse(iris, SETOSA)
     versicolorCentre = getCentreClasse(iris, VERSICOLOR)
     virginicaCentre = getCentreClasse(iris, VIRGINICA)
 
     # On commence par trouver les distances euclidienne intraclasse et interclasse pour nos trois classes
     # Intraclasse
-    intraClasseSetosaEuclid = distanceEuclide(iris[iris["species"] == SETOSA], setosaCentre)
-    intraClasseVersicolorEuclid = distanceEuclide(iris[iris["species"] == VERSICOLOR], versicolorCentre)
-    intraClasseVirginicaEuclid = distanceEuclide(iris[iris["species"] == VIRGINICA], virginicaCentre)
+    intraClasseSetosaEuclid = distanceEuclide(iris[iris[SPECIES] == SETOSA], setosaCentre)
+    intraClasseVersicolorEuclid = distanceEuclide(iris[iris[SPECIES] == VERSICOLOR], versicolorCentre)
+    intraClasseVirginicaEuclid = distanceEuclide(iris[iris[SPECIES] == VIRGINICA], virginicaCentre)
 
     # Interclasse Setosa
-    interClasseSetosaVersicolorEuclid = distanceEuclide(iris[iris["species"] == SETOSA], versicolorCentre)
-    interClasseSetosaVirginicaEuclid = distanceEuclide(iris[iris["species"] == SETOSA], virginicaCentre)
+    interClasseSetosaVersicolorEuclid = distanceEuclide(iris[iris[SPECIES] == SETOSA], versicolorCentre)
+    interClasseSetosaVirginicaEuclid = distanceEuclide(iris[iris[SPECIES] == SETOSA], virginicaCentre)
 
     # Interclasse Versicolor
-    interClasseVersicolorSetosaEuclid = distanceEuclide(iris[iris["species"] == VERSICOLOR], setosaCentre)
-    interClasseVersicolorVirginicaEuclid = distanceEuclide(iris[iris["species"] == VERSICOLOR], virginicaCentre)
+    interClasseVersicolorSetosaEuclid = distanceEuclide(iris[iris[SPECIES] == VERSICOLOR], setosaCentre)
+    interClasseVersicolorVirginicaEuclid = distanceEuclide(iris[iris[SPECIES] == VERSICOLOR], virginicaCentre)
 
     # Interclasse Virginica
-    interClasseVirginicaSetosaEuclid = distanceEuclide(iris[iris["species"] == VIRGINICA], setosaCentre)
-    interClasseVirginicaVersicolorEuclid = distanceEuclide(iris[iris["species"] == VIRGINICA], versicolorCentre)
+    interClasseVirginicaSetosaEuclid = distanceEuclide(iris[iris[SPECIES] == VIRGINICA], setosaCentre)
+    interClasseVirginicaVersicolorEuclid = distanceEuclide(iris[iris[SPECIES] == VIRGINICA], versicolorCentre)
 
     # On va trouver les distances Mahalanobis
 
     # Intraclasse
-    intraClasseSetosaMahal = distanceMahalanobis(iris[iris["species"] == SETOSA], iris[iris["species"] == SETOSA],
+    intraClasseSetosaMahal = distanceMahalanobis(iris[iris[SPECIES] == SETOSA], iris[iris[SPECIES] == SETOSA],
                                                  setosaCentre)
-    intraClasseVersicolorMahal = distanceMahalanobis(iris[iris["species"] == VERSICOLOR],
-                                                     iris[iris["species"] == VERSICOLOR], versicolorCentre)
-    intraClasseVirginicaMahal = distanceMahalanobis(iris[iris["species"] == VIRGINICA],
-                                                    iris[iris["species"] == VIRGINICA], virginicaCentre)
+    intraClasseVersicolorMahal = distanceMahalanobis(iris[iris[SPECIES] == VERSICOLOR],
+                                                     iris[iris[SPECIES] == VERSICOLOR], versicolorCentre)
+    intraClasseVirginicaMahal = distanceMahalanobis(iris[iris[SPECIES] == VIRGINICA],
+                                                    iris[iris[SPECIES] == VIRGINICA], virginicaCentre)
 
     # Interclasse Setosa
-    interClasseSetosaVersicolorMahal = distanceMahalanobis(iris[iris["species"] == SETOSA],
-                                                           iris[iris["species"] == VERSICOLOR], versicolorCentre)
-    interClasseSetosaVirginicaMahal = distanceMahalanobis(iris[iris["species"] == SETOSA],
-                                                          iris[iris["species"] == VIRGINICA], virginicaCentre)
+    interClasseSetosaVersicolorMahal = distanceMahalanobis(iris[iris[SPECIES] == SETOSA],
+                                                           iris[iris[SPECIES] == VERSICOLOR], versicolorCentre)
+    interClasseSetosaVirginicaMahal = distanceMahalanobis(iris[iris[SPECIES] == SETOSA],
+                                                          iris[iris[SPECIES] == VIRGINICA], virginicaCentre)
 
     # Interclasse Versicolor
-    interClasseVersicolorSetosaMahal = distanceMahalanobis(iris[iris["species"] == VERSICOLOR],
-                                                           iris[iris["species"] == SETOSA], setosaCentre)
-    interClasseVersicolorVirginicaMahal = distanceMahalanobis(iris[iris["species"] == VERSICOLOR],
-                                                              iris[iris["species"] == VIRGINICA], virginicaCentre)
+    interClasseVersicolorSetosaMahal = distanceMahalanobis(iris[iris[SPECIES] == VERSICOLOR],
+                                                           iris[iris[SPECIES] == SETOSA], setosaCentre)
+    interClasseVersicolorVirginicaMahal = distanceMahalanobis(iris[iris[SPECIES] == VERSICOLOR],
+                                                              iris[iris[SPECIES] == VIRGINICA], virginicaCentre)
 
     # Interclasse Virginica
-    interClasseVirginicaSetosaMahal = distanceMahalanobis(iris[iris["species"] == VIRGINICA],
-                                                          iris[iris["species"] == SETOSA], setosaCentre)
-    interClasseVirginicaVersicolorMahal = distanceMahalanobis(iris[iris["species"] == VIRGINICA],
-                                                              iris[iris["species"] == VERSICOLOR], versicolorCentre)
+    interClasseVirginicaSetosaMahal = distanceMahalanobis(iris[iris[SPECIES] == VIRGINICA],
+                                                          iris[iris[SPECIES] == SETOSA], setosaCentre)
+    interClasseVirginicaVersicolorMahal = distanceMahalanobis(iris[iris[SPECIES] == VIRGINICA],
+                                                              iris[iris[SPECIES] == VERSICOLOR], versicolorCentre)
 
     # On prépare ici le tableau des distances euclidienne
     dataEuclid = [["À " + SETOSA, "À " + VERSICOLOR, "À " + VIRGINICA],
@@ -160,117 +163,127 @@ def methodeUnA(iris):
                   round(interClasseVirginicaVersicolorMahal[0], 4), round(intraClasseVirginicaMahal[1], 4)]]
 
     # On sauvegarde les deux tableaux en format .png
-    saveTable("Methode1_euclid1.png", "Méthode 1 : Distance euclidienne avec les 4 variables", dataEuclid)
-    saveTable("Methode1_mahal1.png", "Méthode 1 : Distance Mahalanobis avec les 4 variables", dataMahal)
-
-    # # À titre de test, on print les résultats des distances euclidiennes et Mahalanobis
-    # print("--- DISTANCE EUCLIDIENNE INTRACLASSE ---")
-    # printDistance(SETOSA, intraClasseSetosaEuclid, True)
-    # printDistance(VERSICOLOR, intraClasseVersicolorEuclid, True)
-    # printDistance(VIRGINICA, intraClasseVirginicaEuclid, True)
-    # print("--- DISTANCE EUCLIDIENNE INTERCLASSE SETOSA ---")
-    # printDistance(VERSICOLOR, interClasseSetosaVersicolorEuclid, False)
-    # printDistance(VIRGINICA, interClasseSetosaVirginicaEuclid, False)
-    # print("--- DISTANCE EUCLIDIENNE INTERCLASSE VERSICOLOR ---")
-    # printDistance(SETOSA, interClasseVersicolorSetosaEuclid, False)
-    # printDistance(VIRGINICA, interClasseVersicolorVirginicaEuclid, False)
-    # print("--- DISTANCE EUCLIDIENNE INTERCLASSE VIRGINICA ---")
-    # printDistance(SETOSA, interClasseVirginicaSetosaEuclid, False)
-    # printDistance(VERSICOLOR, interClasseVirginicaVersicolorEuclid, False)
-    # print("\n--- DISTANCE MAHALANOBIS INTRACLASSE ---")
-    # printDistance(SETOSA, intraClasseSetosaMahal, True)
-    # printDistance(VERSICOLOR, intraClasseVersicolorMahal, True)
-    # printDistance(VIRGINICA, intraClasseVirginicaMahal, True)
-    # print("--- DISTANCE MAHALANOBIS INTERCLASSE SETOSA ---")
-    # printDistance(VERSICOLOR, interClasseSetosaVersicolorMahal, False)
-    # printDistance(VIRGINICA, interClasseSetosaVirginicaMahal, False)
-    # print("--- DISTANCE MAHALANOBIS INTERCLASSE VERSICOLOR ---")
-    # printDistance(SETOSA, interClasseVersicolorSetosaMahal, False)
-    # printDistance(VIRGINICA, interClasseVersicolorVirginicaMahal, False)
-    # print("--- DISTANCE MAHALANOBIS INTERCLASSE VIRGINICA ---")
-    # printDistance(SETOSA, interClasseVirginicaSetosaMahal, False)
-    # printDistance(VERSICOLOR, interClasseVirginicaVersicolorMahal, False)
+    saveTable("Methode1_euclid_4var.png", "Méthode 1 : Distance euclidienne (4 variables sans transformation)",
+              dataEuclid)
+    saveTable("Methode1_mahal_4var.png", "Méthode 1 : Distance Mahalanobis (4 variables sans transformation)",
+              dataMahal)
 
     return
 
 
-def histogramme(iris):
+def methodeDeuxA(iris):
+    histogramme("Methode2a_VersiSetoPW.png", iris, VERSICOLOR, SETOSA, PETAL_WIDTH)
+    # histogramme("Methode2a_VersiSetoPL.png", iris, VERSICOLOR, SETOSA, PETAL_LENGTH)
+    # histogramme("Methode2a_VersiSetoSW.png", iris, VERSICOLOR, SETOSA, SEPAL_WIDTH)
+    # histogramme("Methode2a_VersiSetoSL.png", iris, VERSICOLOR, SETOSA, SEPAL_LENGTH)
+    # histogramme("Methode2a_VirgiSetoPW.png", iris, VIRGINICA, SETOSA, PETAL_WIDTH)
+    histogramme("Methode2a_VirgiSetoPL.png", iris, VIRGINICA, SETOSA, PETAL_LENGTH)
+    # histogramme("Methode2a_VirgiSetoSW.png", iris, VIRGINICA, SETOSA, SEPAL_WIDTH)
+    # histogramme("Methode2a_VirgiSetoSL.png", iris, VIRGINICA, SETOSA, SEPAL_LENGTH)
+    histogramme("Methode2a_VersiVirgiPW.png", iris, VERSICOLOR, VIRGINICA, PETAL_WIDTH)
+    # histogramme("Methode2a_VersiVirgiPL.png", iris, VERSICOLOR, VIRGINICA, PETAL_LENGTH)
+    # histogramme("Methode2a_VersiVirgiSW.png", iris, VERSICOLOR, VIRGINICA, SEPAL_WIDTH)
+    # histogramme("Methode2a_VersiVirgiSL.png", iris, VERSICOLOR, VIRGINICA, SEPAL_LENGTH)
+
+
+def methodeDeuxB(iris):
+    normalizedIRIS = normalizeIRIS(iris)
+    histogrammeNormalise("histo_norm_SetosaVersi.png", normalizedIRIS, SETOSA, VERSICOLOR)
+    histogrammeNormalise("histo_norm_SetosaVirgi.png", normalizedIRIS, SETOSA, VIRGINICA)
+    histogrammeNormalise("histo_norm_VersiVirgi.png", normalizedIRIS, VERSICOLOR, VIRGINICA)
+
+    # # On sort les 3 combinaisons de nuages de points avec les données transformées
+    # nuagePointsNormalise("np_norm_SetosaVersi.png", normalizedIRIS, SETOSA, VERSICOLOR, getEigenValues(normalizedIRIS, 2))
+    # nuagePointsNormalise("np_norm_SetosaVirgi.png", normalizedIRIS, SETOSA, VIRGINICA, getEigenValues(normalizedIRIS, 2))
+    # nuagePointsNormalise("np_norm_VersiVirgi.png", normalizedIRIS, VERSICOLOR, VIRGINICA, getEigenValues(normalizedIRIS, 2))
+    return
+
+
+def methodeDeuxC(iris):
+    nuagePoints("np_SetoVersi_PW_SL.png", iris, SETOSA, VERSICOLOR, PETAL_WIDTH, SEPAL_LENGTH)
+    nuagePoints("np_SetoVirgi_PW_PL.png", iris, SETOSA, VIRGINICA, PETAL_WIDTH, PETAL_LENGTH)
+    nuagePoints("np_VersiVirgi_SW_PW.png", iris, VERSICOLOR, VIRGINICA, SEPAL_WIDTH, PETAL_WIDTH)
+
+    return
+
+
+def histogramme(nomFichier, iris, nomDataA, nomDataB, nomVariable):
+    plot.clf()
     plot.figure(1)
-    versicolor = iris[iris["species"] == "versicolor"]
-    setosa = iris[iris["species"] == "setosa"]
-    plot.hist((versicolor["sepal_length"], setosa["sepal_length"]))
-    plot.title("Longueurs des sépales de versicolor en comparaison à setosa")
+    versicolor = iris[iris[SPECIES] == nomDataA]
+    setosa = iris[iris[SPECIES] == nomDataB]
+    plot.hist((versicolor[nomVariable], setosa[nomVariable]))
+    plot.title("Variable " + nomVariable + " de " + nomDataA + " en comparaison à " + nomDataB)
     plot.ylabel("Fréquence")
-    plot.xlabel("Longueur des sépales")
-    plot.savefig("output/2a.png")
+    plot.xlabel(nomVariable)
+    plot.savefig("output/" + nomFichier)
 
 
-def histogrammeNormalise(irisNormalise, eigenVector):
-    plot.figure(5)
+def histogrammeNormalise(nomFichier, irisNormalise, nomDataA, nomDataB):
+    plot.clf()
+    plot.figure(1)
 
-    setosaNorm = irisNormalise[irisNormalise["species"] == "setosa"]
-    setosaNorm = setosaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    setosaNormalisees = np.matmul(eigenVector, setosaNorm.to_numpy().transpose())
+    eigenVecA = getEigenValues(irisNormalise, nomDataA, nomDataB, 1)
+    eigenVecB = getEigenValues(irisNormalise, nomDataB, nomDataB, 1)
 
-    versicolorNorm = irisNormalise[irisNormalise["species"] == "versicolor"]
-    versicolorNorm = versicolorNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    versicolorNormalisees = np.matmul(eigenVector, versicolorNorm.to_numpy().transpose())
+    dataNormA = irisNormalise[irisNormalise[SPECIES] == nomDataA]
+    dataNormA = dataNormA[[SEPAL_LENGTH, SEPAL_WIDTH, PETAL_LENGTH, PETAL_WIDTH]]
+    dataNormA = np.matmul(eigenVecA, dataNormA.to_numpy().transpose())
 
-    virginicaNorm = irisNormalise[irisNormalise["species"] == "virginica"]
-    virginicaNorm = virginicaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    virginicaNormalisees = np.matmul(eigenVector, virginicaNorm.to_numpy().transpose())
+    dataNormB = irisNormalise[irisNormalise[SPECIES] == nomDataB]
+    dataNormB = dataNormB[[SEPAL_LENGTH, SEPAL_WIDTH, PETAL_LENGTH, PETAL_WIDTH]]
+    dataNormB = np.matmul(eigenVecB, dataNormB.to_numpy().transpose())
 
-    plot.hist((virginicaNormalisees[0], versicolorNormalisees[0]))
-    plot.title("Séparation des classes de la banque de données IRIS")
+    plot.hist((dataNormA[0], dataNormB[0]))
+    plot.title("Séparation des classes " + nomDataA + " et de " + nomDataB)
     plot.ylabel("Fréquence")
     plot.xlabel("Valeur Z")
-    plot.savefig("output/2ac.png")
+    plot.savefig("output/" + nomFichier)
 
 
-def nuagePoints(iris):
-    plot.figure(2)
-    setosa = iris[iris["species"] == "setosa"]
-    versicolor = iris[iris["species"] == "versicolor"]
-    plot.scatter(x=setosa["sepal_length"], y=setosa["petal_length"])
-    plot.scatter(x=versicolor["sepal_length"], y=versicolor["petal_length"])
-    plot.title("Longueurs des sépales comparément à la longueur des pétales")
-    plot.ylabel("Longueur des pétales")
-    plot.xlabel("Longueur des sépales")
+def nuagePoints(nomFichier, iris, nomDataA, nomDataB, nomVariableA, nomVariableB):
+    plot.clf()
+    plot.figure(1)
+
+    dataA = iris[iris[SPECIES] == nomDataA]
+    dataB = iris[iris[SPECIES] == nomDataB]
+    plot.scatter(x=dataA[nomVariableA], y=dataA[nomVariableB])
+    plot.scatter(x=dataB[nomVariableA], y=dataB[nomVariableB])
+    plot.title("Classes " + nomDataA + " et " + nomDataB + " avec les variables " + nomVariableA + " et " + nomVariableB)
+    plot.ylabel(nomVariableB)
+    plot.xlabel(nomVariableA)
+    plot.savefig("output/" + nomFichier)
 
 
-def nuagePointsNormalise(irisNormalise, eigenVectors):
-    plot.figure(3)
-    setosaNorm = irisNormalise[irisNormalise["species"] == "setosa"]
-    setosaNorm = setosaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    setosaNormalisees = np.matmul(eigenVectors, setosaNorm.to_numpy().transpose())
+def nuagePointsNormalise(nomFichier, irisNormalise, nomDataA, nomDataB, eigenVectors):
+    plot.clf()
+    plot.figure(1)
 
-    versicolorNorm = irisNormalise[irisNormalise["species"] == "versicolor"]
-    versicolorNorm = versicolorNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    versicolorNormalisees = np.matmul(eigenVectors, versicolorNorm.to_numpy().transpose())
+    dataNormA = irisNormalise[irisNormalise[SPECIES] == nomDataA]
+    dataNormA = dataNormA[[SEPAL_LENGTH, SEPAL_WIDTH, PETAL_LENGTH, PETAL_WIDTH]]
+    dataNormA = np.matmul(eigenVectors, dataNormA.to_numpy().transpose())
 
-    virginicaNorm = irisNormalise[irisNormalise["species"] == "virginica"]
-    virginicaNorm = virginicaNorm[["sepal_length", "sepal_width", "petal_length", "petal_width"]]
-    virginicaNormalisees = np.matmul(eigenVectors, virginicaNorm.to_numpy().transpose())
+    dataNormB = irisNormalise[irisNormalise[SPECIES] == nomDataB]
+    dataNormB = dataNormB[[SEPAL_LENGTH, SEPAL_WIDTH, PETAL_LENGTH, PETAL_WIDTH]]
+    dataNormB = np.matmul(eigenVectors, dataNormB.to_numpy().transpose())
 
-    plot.scatter(x=setosaNormalisees[0], y=setosaNormalisees[1])
-    plot.scatter(x=versicolorNormalisees[0], y=versicolorNormalisees[1])
-    plot.scatter(x=virginicaNormalisees[0], y=virginicaNormalisees[1])
-    plot.title("Séparation des différentes classes de la banque de données IRIS")
-    plot.savefig("output/2bc.png")
-    plot.show()
+    plot.scatter(x=dataNormA[0], y=dataNormA[1])
+    plot.scatter(x=dataNormB[0], y=dataNormB[1])
+    plot.title("Séparation des classes " + nomDataA + " et " + nomDataB + " de la banque de données IRIS")
+    plot.savefig("output/" + nomFichier)
 
 
-def getEigenValues(iris, nbAxis):
-    classe = iris[iris["species"] == "setosa"]
-    centreClasse = getCentreClasse(iris, "setosa")
+def getEigenValues(iris, dataNameA, dataNameB, nbAxis):
+    classe = iris[iris[SPECIES] == dataNameA]
+    centreClasse = getCentreClasse(iris, dataNameB)
 
     matriceCov = np.zeros((4, 4), dtype=float)
     centre = np.array(
         [centreClasse.sepal_length, centreClasse.sepal_width, centreClasse.petal_length, centreClasse.petal_width])
     for i in classe.index:
         currentPos = np.array(
-            [classe["sepal_length"].get(i), classe["sepal_width"].get(i), classe["petal_length"].get(i),
-             classe["petal_width"].get(i)])
+            [classe[SEPAL_LENGTH].get(i), classe[SEPAL_WIDTH].get(i), classe[PETAL_LENGTH].get(i),
+             classe[PETAL_WIDTH].get(i)])
         a = np.array(currentPos - centre)[np.newaxis]
         b = a * a.T
         matriceCov += b
@@ -342,17 +355,12 @@ def normalizeIRIS(iris):
     return normalizedDataframe
 
 
-def printDistance(nomClasse, tupleDistance, estIntra):
-    indiceTuple = 0
-    if estIntra:
-        indiceTuple = 1
-    print(nomClasse + " : " + str(tupleDistance[indiceTuple]))
-
-
 # Notre code pour la génération de talbeau avec matplotlib est basé sur celui
 # offert sur le site https://towardsdatascience.com/simple-little-tables-with-matplotlib-9780ef5d0bc4
 def saveTable(nomFichier, titre, data):
-    plot.figure(9)
+    plot.clf()
+    plot.figure(2)
+
     title_text = titre
     footer_text = '1er octobre 2021'
     fig_background_color = 'skyblue'
@@ -400,7 +408,7 @@ def saveTable(nomFichier, titre, data):
     plot.draw()
     # Create image. plt.savefig ignores figure edge and face colors, so map them.
     fig = plot.gcf()
-    plot.savefig("output/"+nomFichier,
+    plot.savefig("output/" + nomFichier,
                  bbox_inches='tight',
                  edgecolor=fig.get_edgecolor(),
                  facecolor=fig.get_facecolor(),
@@ -409,14 +417,20 @@ def saveTable(nomFichier, titre, data):
 
 
 def main():
+    # Ramasse les données du dataset Iris
     iris = panda.read_csv("data/iris.csv")
-    methodeUnA(iris)
-    histogramme(iris)
-    nuagePoints(iris)
-    normalizedIRIS = normalizeIRIS(iris)
-    histogrammeNormalise(normalizedIRIS, getEigenValues(normalizedIRIS, 1))
-    nuagePointsNormalise(normalizedIRIS, getEigenValues(normalizedIRIS, 2))
 
+    # Méthode 1 (1.a + 1.b)
+    methodeUn(iris)
+
+    # Méthode 2a (2.a)
+    methodeDeuxA(iris)
+
+    # Méthode 2b (2.a + 2.c)
+    methodeDeuxB(iris)
+
+    # Méthode 2c (2.b)
+    methodeDeuxC(iris)
 
 if __name__ == '__main__':
     main()

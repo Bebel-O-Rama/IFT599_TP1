@@ -14,6 +14,7 @@ PETAL_WIDTH = "petal_width"
 
 SPECIES = "species"
 
+
 @dataclass
 class IRISClass:
     sepal_length: float
@@ -96,7 +97,7 @@ def distanceMahalanobis(classeA, classeB, centreClasseB):
     return (float(minDistance[0]), float(maxDistance[0]))
 
 
-def methodeUnA(iris):
+def methodeUn(iris):
     setosaCentre = getCentreClasse(iris, SETOSA)
     versicolorCentre = getCentreClasse(iris, VERSICOLOR)
     virginicaCentre = getCentreClasse(iris, VIRGINICA)
@@ -166,10 +167,13 @@ def methodeUnA(iris):
                   round(interClasseVirginicaVersicolorMahal[0], 4), round(intraClasseVirginicaMahal[1], 4)]]
 
     # On sauvegarde les deux tableaux en format .png
-    saveTable("Methode1_euclid_4var.png", "Méthode 1 : Distance euclidienne (4 variables sans transformation)", dataEuclid)
-    saveTable("Methode1_mahal_4var.png", "Méthode 1 : Distance Mahalanobis (4 variables sans transformation)", dataMahal)
+    saveTable("Methode1_euclid_4var.png", "Méthode 1 : Distance euclidienne (4 variables sans transformation)",
+              dataEuclid)
+    saveTable("Methode1_mahal_4var.png", "Méthode 1 : Distance Mahalanobis (4 variables sans transformation)",
+              dataMahal)
 
     return
+
 
 def methodeDeuxA(iris):
     histogramme("Methode2a_VersiSetoPW.png", iris, VERSICOLOR, SETOSA, PETAL_WIDTH)
@@ -184,6 +188,15 @@ def methodeDeuxA(iris):
     # histogramme("Methode2a_VersiVirgiPL.png", iris, VERSICOLOR, VIRGINICA, PETAL_LENGTH)
     # histogramme("Methode2a_VersiVirgiSW.png", iris, VERSICOLOR, VIRGINICA, SEPAL_WIDTH)
     # histogramme("Methode2a_VersiVirgiSL.png", iris, VERSICOLOR, VIRGINICA, SEPAL_LENGTH)
+
+
+def methodeDeuxB(iris):
+    return
+
+
+def methodeDeuxC(iris):
+    return
+
 
 # CHANGER LES CONST POUR DES VAR!!!!!
 def histogramme(nomFichier, iris, nomDataA, nomDataB, nomVariable):
@@ -298,7 +311,7 @@ def saveTable(nomFichier, titre, data):
     plot.draw()
     # Create image. plt.savefig ignores figure edge and face colors, so map them.
     fig = plot.gcf()
-    plot.savefig("output/"+nomFichier,
+    plot.savefig("output/" + nomFichier,
                  bbox_inches='tight',
                  edgecolor=fig.get_edgecolor(),
                  facecolor=fig.get_facecolor(),
@@ -307,11 +320,22 @@ def saveTable(nomFichier, titre, data):
 
 
 def main():
+    # Ramasse les données du dataset Iris
     iris = panda.read_csv("data/iris.csv")
-    methodeUnA(iris)
+
+    # Méthode 1 (1.a + 1.b)
+    methodeUn(iris)
+
+    # Méthode 2a (2.a)
     methodeDeuxA(iris)
-    nuagePoints(iris)
-    # normalizeIRIS(iris)
+
+    # Méthode 2b (2.a + 2.c)
+    methodeDeuxB(iris)
+
+    # Méthode 2c (2.b)
+    methodeDeuxC(iris)
+
+    # À DÉPLACER DANS UNE MÉTHODE
     getEigenValues(iris)
 
 
